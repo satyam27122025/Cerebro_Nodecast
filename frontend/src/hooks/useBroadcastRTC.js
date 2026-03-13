@@ -35,6 +35,20 @@ export function useBroadcastRTC({ mode, publish, listenerId, onLog, onMediaStatu
     }
   }, []);
 
+  const toggleVideo = useCallback((enabled) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    stream.getVideoTracks().forEach((track) => { track.enabled = enabled; });
+    updateMediaStatus(stream);
+  }, [updateMediaStatus]);
+
+  const toggleAudio = useCallback((enabled) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    stream.getAudioTracks().forEach((track) => { track.enabled = enabled; });
+    updateMediaStatus(stream);
+  }, [updateMediaStatus]);
+
   const stopLocalBroadcast = useCallback(() => {
     for (const peerId of peersRef.current.keys()) {
       cleanupPeer(peerId);
@@ -188,6 +202,8 @@ export function useBroadcastRTC({ mode, publish, listenerId, onLog, onMediaStatu
     remoteStream,
     startLocalBroadcast,
     stopLocalBroadcast,
+    toggleVideo,
+    toggleAudio,
     handleSocketEvent,
     broadcastToListeners,
   };

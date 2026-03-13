@@ -106,7 +106,7 @@ export const useSyncStore = create((set) => ({
           latencyMs: nextLatency,
           syncOffsetMs: data?.sync_offset_ms ?? state.telemetry.syncOffsetMs,
           usersConnected: data?.listener_count ?? state.telemetry.usersConnected,
-          videoState: event === "play" ? "playing" : event === "pause" ? "paused" : state.telemetry.videoState,
+          videoState: event === "media_status" ? (data?.video_enabled ? "live" : "idle") : (event === "play" ? "playing" : event === "pause" ? "paused" : state.telemetry.videoState),
           audioState: event === "media_status" ? (data?.audio_enabled ? "live" : "idle") : state.telemetry.audioState,
           latencyHistory: nextHistory,
         },
