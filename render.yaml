@@ -21,8 +21,6 @@ services:
           name: cerebro-db
           property: connectionString
 
-
-
 databases:
   - name: cerebro-db
     databaseName: cerebro
