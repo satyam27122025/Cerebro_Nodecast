@@ -2,6 +2,7 @@ services:
   - type: web
     name: cerebro-api
     env: python
+    plan: free
     buildCommand: "./backend/build.sh"
     startCommand: "cd backend && daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     envVars:
@@ -25,11 +26,13 @@ services:
           name: cerebro-db
           property: connectionString
 
+  - type: redis
+    name: cerebro-redis
+    plan: free
+    ipAllowList: [] # only allow internal connections
+
 databases:
   - name: cerebro-db
     databaseName: cerebro
     user: cerebro
-
-  - type: redis
-    name: cerebro-redis
-    ipAllowList: [] # only allow internal connections
+    plan: free
