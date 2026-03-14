@@ -163,11 +163,13 @@ export function useBroadcastRTC({ mode, publish, listenerId, onLog, onMediaStatu
       }
 
       const peer = new RTCPeerConnection(RTC_CONFIG);
-      const inboundStream = new MediaStream();
-      setRemoteStream(inboundStream);
       peer.ontrack = (trackEvent) => {
-        for (const track of trackEvent.streams[0].getTracks()) {
-          inboundStream.addTrack(track);
+        if (trackEvent.streams && trackEvent.streams[0]) {
+          setRemoteStream(trackEvent.streams[0]);
+        } else {
+          // fallback if streams array is empty
+          const fallbackStream = new MediaStream([trackEvent.track]);
+          setRemoteStream(fallbackStream);
         }
       };
       peer.onicecandidate = (iceEvent) => {
