@@ -149,6 +149,8 @@ if cors_origins:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOWED_ORIGINS = [
+        "https://cerebronodecast.vercel.app",
+        "https://cerebro-code-red.vercel.app",
         "http://127.0.0.1:5173",
         "http://localhost:5173",
         "http://127.0.0.1:5174",
