@@ -11,85 +11,91 @@ from .serializers import RoomSerializer
 
 @api_view(["POST"])
 def create_room(request):
-    def generate_room_code(length: int = 6) -> str:
-        alphabet = string.ascii_uppercase + string.digits
-        return "".join(random.choices(alphabet, k=length))
+    try:
+        def generate_room_code(length: int = 6) -> str:
+            alphabet = string.ascii_uppercase + string.digits
+            return "".join(random.choices(alphabet, k=length))
 
-    # Require broadcaster field per decision
-    broadcaster = (request.data.get("broadcaster") or "").strip()
-    if not broadcaster:
-        return Response({"detail": "broadcaster is required."}, status=status.HTTP_400_BAD_REQUEST)
+        # Require broadcaster field per decision
+        broadcaster = (request.data.get("broadcaster") or "").strip()
+        if not broadcaster:
+            return Response({"detail": "broadcaster is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    video_url = request.data.get("video_url", "")
+        video_url = request.data.get("video_url", "")
 
-    # Accept optional room_code; generate if missing
-    room_code = request.data.get("room_code")
-    if not room_code:
-        # try to generate a unique code a few times
-        for _ in range(6):
-            candidate = generate_room_code(6)
-            if not Room.objects.filter(room_code=candidate).exists():
-                room_code = candidate
-                break
+        # Accept optional room_code; generate if missing
+        room_code = request.data.get("room_code")
         if not room_code:
-            return Response({"detail": "Could not generate unique room code"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # try to generate a unique code a few times
+            for _ in range(6):
+                candidate = generate_room_code(6)
+                if not Room.objects.filter(room_code=candidate).exists():
+                    room_code = candidate
+                    break
+            if not room_code:
+                return Response({"detail": "Could not generate unique room code"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    room, created = Room.objects.get_or_create(
-        room_code=room_code,
-        defaults={
-            "video_url": video_url,
-            "broadcaster": broadcaster,
-        }
-    )
-    if not created:
-        room.broadcaster = broadcaster
-        if video_url:
-            room.video_url = video_url
-        room.save()
+        room, created = Room.objects.get_or_create(
+            room_code=room_code,
+            defaults={
+                "video_url": video_url,
+                "broadcaster": broadcaster,
+            }
+        )
+        if not created:
+            room.broadcaster = broadcaster
+            if video_url:
+                room.video_url = video_url
+            room.save()
 
-    return Response({"room_code": room.room_code}, status=status.HTTP_201_CREATED)
+        return Response({"room_code": room.room_code}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({"error": "Failed to create room", "detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
 def join_room(request):
-
-    room_code = request.data.get("room_code")
-
-    if not room_code:
-        return Response({"error": "Room code required"}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
-        room = Room.objects.get(room_code=room_code)
-    except Room.DoesNotExist:
-        return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+        room_code = request.data.get("room_code")
 
-    # Accept an optional client-provided listener_id; prefer a valid UUID from client
-    client_listener_id = request.data.get("listener_id")
-    listener = None
-    if client_listener_id:
+        if not room_code:
+            return Response({"error": "Room code required"}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            lid = uuid.UUID(str(client_listener_id))
-            # try to get or create listener with provided id
-            listener, created = Listener.objects.get_or_create(room=room, listener_id=lid)
-        except Exception:
-            listener = None
+            room = Room.objects.get(room_code=room_code)
+        except Room.DoesNotExist:
+            return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if not listener:
-        listener = Listener.objects.create(room=room)
+        # Accept an optional client-provided listener_id; prefer a valid UUID from client
+        client_listener_id = request.data.get("listener_id")
+        listener = None
+        if client_listener_id:
+            try:
+                lid = uuid.UUID(str(client_listener_id))
+                # try to get or create listener with provided id
+                listener, created = Listener.objects.get_or_create(room=room, listener_id=lid)
+            except Exception:
+                listener = None
 
-    return Response({
-        "room_code": room.room_code,
-        "listener_id": str(listener.listener_id)
-    })
+        if not listener:
+            listener = Listener.objects.create(room=room)
+
+        return Response({
+            "room_code": room.room_code,
+            "listener_id": str(listener.listener_id)
+        })
+    except Exception as e:
+        return Response({"error": "Failed to join room", "detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
 def get_room_state(request, room_code):
-
     try:
-        room = Room.objects.get(room_code=room_code)
-
-    except Room.DoesNotExist:
-        return Response({"error": "Room not found"}, status=404)
-    serializer = RoomSerializer(room)
-    return Response(serializer.data)
+        try:
+            room = Room.objects.get(room_code=room_code)
+        except Room.DoesNotExist:
+            return Response({"error": "Room not found"}, status=404)
+        serializer = RoomSerializer(room)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": "Failed to retrieve room state", "detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

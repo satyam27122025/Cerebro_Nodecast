@@ -164,6 +164,32 @@ else:
     ]
 CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "0").lower() in ["1", "true"] or DEBUG
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://cerebronodecast.vercel.app",
+    "https://cerebro-code-red.vercel.app",
+    "https://cerebro-api.onrender.com",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:5174",
+    "http://127.0.0.1:5175",
+    "http://localhost:5175",
+]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
 # Channels
 redis_url = os.environ.get("REDIS_URL")
 if redis_url:
