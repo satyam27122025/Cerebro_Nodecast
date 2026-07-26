@@ -29,10 +29,10 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "1") in ["1", "True", "true"]
 allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS")
 if allowed_hosts:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(",") if host.strip()]
-elif DEBUG:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0", "*"]
+    if ".onrender.com" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".onrender.com")
 else:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".onrender.com", "*"]
 
 # Application definition
 
@@ -91,7 +91,11 @@ import dj_database_url
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
     DATABASES = {

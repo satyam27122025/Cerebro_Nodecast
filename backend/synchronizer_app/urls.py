@@ -1,8 +1,11 @@
-from django.urls import path, re_path
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    re_path(r"^create-room/?$", views.create_room),
-    re_path(r"^join-room/?$", views.join_room),
-    re_path(r"^room-state/(?P<room_code>[^/]+)/?$", views.get_room_state),
+    path("create-room", views.create_room),
+    path("create-room/", views.create_room),
+    path("join-room", views.join_room),
+    path("join-room/", views.join_room),
+    path("room-state/<str:room_code>", views.get_room_state),
+    path("room-state/<str:room_code>/", views.get_room_state),
 ]
