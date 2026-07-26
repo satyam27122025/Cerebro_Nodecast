@@ -1,6 +1,17 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useSyncStore } from "../store/useSyncStore";
 
+function getWsUrl(roomCode) {
+  if (import.meta.env.VITE_WS_BASE_URL) {
+    const base = import.meta.env.VITE_WS_BASE_URL.replace(/\/$/, "");
+    return `${base}/ws/sync/${roomCode}/`;
+  }
+  const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const wsProtocol = apiBase.startsWith("https") ? "wss:" : "ws:";
+  const wsHost = apiBase.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return `${wsProtocol}//${wsHost}/ws/sync/${roomCode}/`;
+}
+
 export function useRealtimeSync(roomCode, role, config = {}) {
   const socketRef = useRef(null);
   const reconnectTimerRef = useRef(null);
@@ -19,7 +30,8 @@ export function useRealtimeSync(roomCode, role, config = {}) {
     if (!roomCode) return;
 
     updateTelemetry({ wsStatus: "connecting" });
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/sync/${roomCode}/`);
+    const wsUrl = getWsUrl(roomCode);
+    const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
