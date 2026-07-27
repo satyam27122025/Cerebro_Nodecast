@@ -87,9 +87,29 @@ ASGI_APPLICATION = "config.asgi.application"
 # https://docs.djangoproject.com/en/stable/ref/settings/#databases
 
 import dj_database_url
+import socket
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+_use_postgres = False
+
 if DATABASE_URL:
+    # On Render, the internal database hostname (dpg-xxx-a) only resolves
+    # at runtime inside the private network, NOT during the build phase.
+    # Detect this by trying to resolve the hostname. If it fails, fall back
+    # to SQLite so that build-phase commands (collectstatic, migrate) succeed
+    # harmlessly. At runtime the hostname resolves and PostgreSQL is used.
+    _parsed = dj_database_url.parse(DATABASE_URL)
+    _db_host = _parsed.get("HOST", "")
+    if _db_host:
+        try:
+            socket.getaddrinfo(_db_host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            _use_postgres = True
+        except socket.gaierror:
+            _use_postgres = False
+    else:
+        _use_postgres = True
+
+if _use_postgres and DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
