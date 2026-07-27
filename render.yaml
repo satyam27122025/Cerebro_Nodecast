@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "./backend/build.sh"
-    startCommand: "cd backend && daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+    startCommand: "cd backend && python manage.py migrate && daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     envVars:
       - key: PYTHONPATH
         value: /opt/render/project/src/backend
