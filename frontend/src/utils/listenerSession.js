@@ -6,7 +6,13 @@ export function getListenerSessionId() {
     return existing;
   }
 
-  const generated = `listener-${crypto.randomUUID()}`;
+  const generated = crypto.randomUUID();
   window.sessionStorage.setItem(LISTENER_SESSION_KEY, generated);
   return generated;
+}
+
+export function setListenerSessionId(id) {
+  if (id) {
+    window.sessionStorage.setItem(LISTENER_SESSION_KEY, id);
+  }
 }

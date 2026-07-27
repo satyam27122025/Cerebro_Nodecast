@@ -8,4 +8,6 @@ urlpatterns = [
     path("join-room/", views.join_room),
     path("room-state/<str:room_code>", views.get_room_state),
     path("room-state/<str:room_code>/", views.get_room_state),
+    path("diagnose", views.diagnose),
+    path("diagnose/", views.diagnose),
 ]

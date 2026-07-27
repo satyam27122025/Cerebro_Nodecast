@@ -1,6 +1,8 @@
 import random
 import string
 import uuid
+import os
+import traceback
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -99,3 +101,38 @@ def get_room_state(request, room_code):
         return Response(serializer.data)
     except Exception as e:
         return Response({"error": "Failed to retrieve room state", "detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def diagnose(request):
+    res = {}
+    try:
+        from django.db import connection
+        res["database_connection"] = "ok"
+        connection.ensure_connection()
+        res["database_ping"] = "ok"
+    except Exception as e:
+        res["database_error"] = str(e)
+        res["database_traceback"] = traceback.format_exc()
+
+    try:
+        from .models import Room
+        res["room_count"] = Room.objects.count()
+    except Exception as e:
+        res["room_error"] = str(e)
+        res["room_traceback"] = traceback.format_exc()
+
+    try:
+        import redis
+        from django.conf import settings
+        # Test redis connection
+        redis_url = os.environ.get("REDIS_URL")
+        res["redis_url_configured"] = bool(redis_url)
+        if redis_url:
+            r = redis.from_url(redis_url)
+            res["redis_ping"] = r.ping()
+    except Exception as e:
+        res["redis_error"] = str(e)
+        res["redis_traceback"] = traceback.format_exc()
+
+    return Response(res)

@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import TerminalConsole from "../components/ui/TerminalConsole";
 import useStore from "../store/useStore";
-import { getListenerSessionId } from "../utils/listenerSession";
+import { getListenerSessionId, setListenerSessionId } from "../utils/listenerSession";
 import { api } from "../utils/api";
 
 export default function JoinRoom() {
@@ -20,6 +20,9 @@ export default function JoinRoom() {
   const executeJoin = async (targetCode) => {
     const listenerId = getListenerSessionId();
     const data = await api.joinRoom(targetCode, listenerId);
+    if (data.listener_id) {
+      setListenerSessionId(data.listener_id);
+    }
     setRoomCodeStore(data.room_code);
     setIsBroadcaster(false);
     navigate(`/listener/${data.room_code}`);
